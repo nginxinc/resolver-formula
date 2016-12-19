@@ -3,12 +3,16 @@
 #####################################
 
 {% if salt['pillar.get']('resolver:use_resolvconf', True) %}
-  {% set is_resolvconf_enabled = grains['os'] == 'Ubuntu' and salt['pkg.version']('resolvconf') %}
+  {% if grains['os'] == 'Ubuntu' and salt['pkg.version']('resolvconf') %}
+{% set resolver_conf = '/etc/resolvconf/resolv.conf.d/base' %}
+resolv-update:
+  cmd.run:
+    - name: resolvconf -u
+    - onchanges:
+      - file: resolv-file
+  {% endif %}
 {% else %}
-  {% set is_resolvconf_enabled = False %}
-{% endif %}
-
-{% if not is_resolvconf_enabled %}
+{% set resolver_conf = '/etc/resolv.conf' %}
 resolvconf-purge:
   pkg.purged:
     - name: resolvconf
@@ -19,11 +23,7 @@ resolvconf-purge:
 # Resolver Configuration
 resolv-file:
   file.managed:
-    {% if is_resolvconf_enabled %}
-    - name: /etc/resolvconf/resolv.conf.d/base
-    {% else %}
-    - name: /etc/resolv.conf
-    {% endif %}
+    - name: {{ resolver_conf }}
     - user: root
     - group: root
     - mode: '0644'
@@ -34,11 +34,3 @@ resolv-file:
         searchpaths: {{ salt['pillar.get']('resolver:searchpaths', [salt['grains.get']('domain'),]) }}
         options: {{ salt['pillar.get']('resolver:options', []) }}
         domain: {{ salt['pillar.get']('resolver:domain') }}
-
-{% if is_resolvconf_enabled %}
-resolv-update:
-  cmd.run:
-    - name: resolvconf -u
-    - onchanges:
-      - file: resolv-file
-{% endif %}
