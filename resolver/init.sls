@@ -5,14 +5,15 @@
 {% if salt['pillar.get']('resolver:use_resolvconf', True) %}
   {% if grains['os'] == 'Ubuntu' and salt['pkg.version']('resolvconf') %}
 {% set resolver_conf = '/etc/resolvconf/resolv.conf.d/base' %}
+  {% else %}
+{% set resolver_conf = '/etc/resolv.conf' %}
+  {% endif %}
 resolv-update:
   cmd.run:
     - name: resolvconf -u
     - onchanges:
       - file: resolv-file
-  {% endif %}
 {% else %}
-{% set resolver_conf = '/etc/resolv.conf' %}
 resolvconf-purge:
   pkg.purged:
     - name: resolvconf
