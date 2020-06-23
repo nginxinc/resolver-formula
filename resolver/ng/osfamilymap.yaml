@@ -1,0 +1,11 @@
+# os_family vars.
+Debian:
+  ng:
+    resolvconf:
+      enabled: True
+      remove: False
+      file: /etc/resolvconf/run/resolv.conf
+FreeBSD:
+  ng:
+    user: root
+    group: wheel
